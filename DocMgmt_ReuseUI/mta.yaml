@@ -1,0 +1,66 @@
+_schema-version: "3.2"
+ID: DocMgmt_ReuseUI
+version: 0.0.1
+modules:
+- name: docmgmt-reuseui-approuter
+  type: approuter.nodejs
+  path: docmgmt-reuseui-approuter
+  requires:
+  - name: DocMgmt_ReuseUI_html_repo_runtime
+  - name: uaa_DocMgmt_ReuseUI
+  - name: DocMgmt_instance
+    properties: 
+      destinations: "[{\"name\": \"sdibackend\", \"url\": \"https://api-sdm-di.cfapps.eu10.hana.ondemand.com\", \"forwardAuthToken\": true}]"
+  parameters:
+    disk-quota: 256M
+    memory: 256M
+- name: DocMgmt_ReuseUI_ui_deployer
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: DocMgmt_ReuseUI_html_repo_host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - docmgmtHTML5Module-content.zip
+      name: docmgmtHTML5Module
+      target-path: resources/
+- name: docmgmtHTML5Module
+  type: html5
+  path: docmgmtHTML5Module
+  build-parameters:
+    builder: custom
+    commands:
+    - npm run build
+    supported-platforms: []
+resources:
+- name: DocMgmt_ReuseUI_html_repo_runtime
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-runtime
+- name: DocMgmt_ReuseUI_html_repo_host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: uaa_DocMgmt_ReuseUI
+  type: org.cloudfoundry.managed-service
+  parameters:
+    path: ./xs-security.json
+    service: xsuaa
+    service-name: DocMgmt_ReuseUI-xsuaa-service
+    service-plan: application
+- name: DocMgmt_instance
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: sdm
+    service-plan: standard
+build-parameters:
+  before-all:
+  - builder: custom
+    commands:
+    - npm install
